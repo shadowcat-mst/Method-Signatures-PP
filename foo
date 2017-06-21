@@ -1,0 +1,15 @@
+use strict;
+use warnings;
+use Method::Signatures::PP;
+
+package Wat;
+
+use Moo;
+
+method foo {
+  "FOO from ".ref($self);
+}
+
+package main;
+
+warn Wat->new->foo;
