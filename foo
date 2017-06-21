@@ -10,6 +10,10 @@ method foo {
   "FOO from ".ref($self);
 }
 
+method bar {
+  "WOOO";
+}
+
 package main;
 
 warn Wat->new->foo;
