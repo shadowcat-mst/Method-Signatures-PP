@@ -38,7 +38,7 @@ sub import {
     1 while filter_read();
     #warn "CODE >>>\n$_<<<";
     local @Found;
-    unless (/(?&PerlDocument) $grammar/x) {
+    unless (/\A (?&PerlDocument) \Z $grammar/x) {
       warn "Failed to parse file; expect complication errors, sorry.\n";
     }
     my $offset = 0;
