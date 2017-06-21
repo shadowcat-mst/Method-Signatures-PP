@@ -150,7 +150,15 @@ line to this module for fatpacking/shipping/etc. - I may yet come up with
 a better solution to this and/or beg Damian for help doing so, but at the
 time of writing I can offer no guarantees.
 
-Note that L<PPR> requires perl 5.10 and as such so does this module.
+Note that L<PPR> requires perl 5.10 and as such so does this module. However,
+if you need to support older perls, you can
+
+    use Method::Signatures::PP::Compile;
+
+which uses ingy's L<Module::Compile> to generate a .pmc file that should run
+fine on whatever version of perl the rest of your code requires. This will
+likely be rewritten to use a slightly less lunatic compilation mechanism in
+later releases.
 
 =head1 AUTHOR
 
