@@ -1,6 +1,6 @@
 use strict;
 use warnings;
-use Test::More;
+use Test::More qw(no_plan);
 use Method::Signatures::PP;
 
 package Wat;
@@ -22,5 +22,3 @@ my $wat = Wat->new;
 is($wat->foo, 'FOO from Wat', 'Parenless method');
 
 is($wat->bar('BAR'), 'WOOO BAR', 'Method w/argument');
-
-done_testing;
