@@ -2,6 +2,7 @@ package Method::Signatures::PP;
 
 use strict;
 use warnings;
+use re 'eval';
 use Filter::Util::Call;
 use PPR;
 
