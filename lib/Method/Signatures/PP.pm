@@ -118,7 +118,7 @@ and
 
 is equivalent to
 
-    method bar ($arg) { my $self; my ($arg) = @_; ... }
+    method bar ($arg) { my $self = shift; my ($arg) = @_; ... }
 
 In fact, it isn't just equivalent, this module literally rewrites the source
 code in the way shown in the examples above. It does so by using a source
