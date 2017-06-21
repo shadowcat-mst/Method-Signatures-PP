@@ -37,34 +37,43 @@ sub import {
     return 0 if $done++;
     1 while filter_read();
     #warn "CODE >>>\n$_<<<";
-    local @Found;
-    unless (/\A (?&PerlDocument) \Z $grammar/x) {
-      warn "Failed to parse file; expect complication errors, sorry.\n";
+    if (defined(my $mangled = mangle($_))) {
+      $_ = $mangled;
     }
-    my $offset = 0;
-    foreach my $case (@Found) {
-      my ($start, $len) = @$case;
-      $start += $offset;
-      my $stmt = substr($_, $start, $len);
-      die "Whit?"
-        unless my @match = $stmt =~ m{
-          \A
-          method ((?&PerlOWS))
-          ((?&PerlIdentifier)) ((?&PerlOWS))
-          (?: ((?&kw_balanced_parens)) ((?&PerlOWS)) )?+
-          ((?&PerlBlock)) ((?&PerlOWS))
-          $grammar
-        }x;
-      my ($ws0, $name, $ws1, $sig, $ws2, $block, $ws3) = @match;
-      my $sigcode = $sig ? " my $sig = \@_;" : '';
-      $block =~ s{^\{}{\{my \$self = shift;${sigcode}};
-      my $replace = "sub${ws0}${name}${ws1}${block}${ws3}";
-      substr($_, $start, $len) = $replace;
-      $offset += length($replace) - $len;
-    }
-    #warn "FINAL >>>\n$_<<<";
     return 1;
   });
+}
+
+sub mangle {
+  my ($code) = @_;
+  local @Found;
+  unless ($code =~ /\A (?&PerlDocument) \Z $grammar/x) {
+    warn "Failed to parse file; expect complication errors, sorry.\n";
+    return undef;
+  }
+  my $offset = 0;
+  foreach my $case (@Found) {
+    my ($start, $len) = @$case;
+    $start += $offset;
+    my $stmt = substr($code, $start, $len);
+    die "Whit?"
+      unless my @match = $stmt =~ m{
+        \A
+        method ((?&PerlOWS))
+        ((?&PerlIdentifier)) ((?&PerlOWS))
+        (?: ((?&kw_balanced_parens)) ((?&PerlOWS)) )?+
+        ((?&PerlBlock)) ((?&PerlOWS))
+        $grammar
+      }x;
+    my ($ws0, $name, $ws1, $sig, $ws2, $block, $ws3) = @match;
+    my $sigcode = $sig ? " my $sig = \@_;" : '';
+    $block =~ s{^\{}{\{my \$self = shift;${sigcode}};
+    my $replace = "sub${ws0}${name}${ws1}${block}${ws3}";
+    substr($code, $start, $len) = $replace;
+    $offset += length($replace) - $len;
+  }
+  #warn "FINAL >>>\n$_<<<";
+  return $code;
 }
 
 1;
