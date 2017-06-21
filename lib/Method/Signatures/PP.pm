@@ -140,6 +140,8 @@ line to this module for fatpacking/shipping/etc. - I may yet come up with
 a better solution to this and/or beg Damian for help doing so, but at the
 time of writing I can offer no guarantees.
 
+Note that L<PPR> requires perl 5.10 and as such so does this module.
+
 =head1 AUTHOR
 
  mst - Matt S. Trout (cpan:MSTROUT) <mst@shadowcat.co.uk>
