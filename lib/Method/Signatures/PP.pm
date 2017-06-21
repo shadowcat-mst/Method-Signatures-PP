@@ -22,9 +22,10 @@ sub import {
     warn "CODE >>>\n$_<<<";
     while (/(?&PerlOWS)?((?&PerlStatement)) $grammar/xg) {
       my $len = length($1);
-      my $start = pos() - $len;
+      my $pos = pos();
+      my $start = $pos - $len;
       my $stmt = $1;
-warn $stmt;
+warn "ST >>>\n$stmt<<<";
       if (my @match = $stmt =~ m{
         \A
         method ((?&PerlOWS))
@@ -36,7 +37,7 @@ warn $stmt;
         $block =~ s{^\{}{\{my \$self = shift;};
         my $replace = "sub${ws0}${name}${ws1}${block}${ws2}";
         substr($_, $start, $len) = $replace;
-        pos() += length($replace) - $len;
+        pos() = $pos + length($replace) - $len;
       }
     }
     return 1;
