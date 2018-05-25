@@ -1,5 +1,6 @@
 Revision history for Method-Signatures-PP
 
+0.000004 - 2018-05-25
   - remove Moo from the test because we don't want it as a dep.
     I'm an idiot.
 
