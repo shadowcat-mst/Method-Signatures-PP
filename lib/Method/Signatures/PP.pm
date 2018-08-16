@@ -5,7 +5,7 @@ use warnings;
 use Import::Into;
 use Moo;
 
-our $VERSION = '0.000004'; # v0.0.4
+our $VERSION = '0.000005'; # v0.0.5
 
 $VERSION = eval $VERSION;
 
