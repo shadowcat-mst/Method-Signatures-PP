@@ -25,6 +25,7 @@ sub extend_grammar {
 
 sub transform_to_plain {
   my ($self, $top) = @_;
+  $top->remove_use_statement('Function::Parameters');
   $top->remove_use_statement('Method::Signatures::PP');
   $top->remove_use_statement('Method::Signatures::Simple');
   $top->each_match_within(MethodDeclaration => [
@@ -117,19 +118,13 @@ So, for the moment, you are strongly advised to not use this module while
 developing code, and instead use L<Function::Parameters> if you have a not
 completely ancient perl and L<Method::Signatures::Simple> if you're still
 back in the stone age banging rocks together, and to then switch your 'use'
-line to this module for fatpacking/shipping/etc. - I may yet come up with
-a better solution to this and/or beg Damian for help doing so, but at the
-time of writing I can offer no guarantees.
+line to this module for fatpacking/shipping/etc. - and since this code now
+uses L<Babble>, to create a .pmc you can run:
 
-Note that L<PPR> requires perl 5.10 and as such so does this module. However,
-if you need to support older perls, you can
+  perl -MBabble::Filter=Method::Signatures::PP -0777 -pe babble \
+    lib/MyFile.pm >lib/MyFile.pmc
 
-    use Method::Signatures::PP::Compile;
-
-which uses ingy's L<Module::Compile> to generate a .pmc file that should run
-fine on whatever version of perl the rest of your code requires. This will
-likely be rewritten to use a slightly less lunatic compilation mechanism in
-later releases.
+(or even use -pi -e on a built distdir)
 
 =head1 AUTHOR
 
