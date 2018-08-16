@@ -2,78 +2,49 @@ package Method::Signatures::PP;
 
 use strict;
 use warnings;
-use re 'eval';
-use Filter::Util::Call;
-use PPR;
+use Import::Into;
+use Moo;
 
 our $VERSION = '0.000004'; # v0.0.4
 
 $VERSION = eval $VERSION;
 
-our $Statement_Start;
-
-our @Found;
-
-my $grammar = qr{
-  (?(DEFINE)
-    (?<PerlKeyword>
-      (?{ local $Statement_Start = pos() })
-      method (?&PerlOWS)
-      (?&PerlIdentifier) (?&PerlOWS)
-      (?: (?&kw_balanced_parens) (?&PerlOWS) )?+
-      (?&PerlBlock) (?&PerlOWS)
-      (?{ push @Found, [ $Statement_Start, pos() - $Statement_Start ] })
-    )
-    (?<kw_balanced_parens>
-      \( (?: [^()]++ | (?&kw_balanced_parens) )*+ \)
-    )
-  )
-  $PPR::GRAMMAR
-}x;
-
 sub import {
-  my $done = 0;
-  filter_add(sub {
-    return 0 if $done++;
-    1 while filter_read();
-    #warn "CODE >>>\n$_<<<";
-    if (defined(my $mangled = mangle($_))) {
-      $_ = $mangled;
-    }
-    return 1;
-  });
+  Babble::Filter->import::into(1, __PACKAGE__);
 }
 
-sub mangle {
-  my ($code) = @_;
-  local @Found;
-  unless ($code =~ /\A (?&PerlDocument) \Z $grammar/x) {
-    warn "Failed to parse file; expect complication errors, sorry.\n";
-    return undef;
-  }
-  my $offset = 0;
-  foreach my $case (@Found) {
-    my ($start, $len) = @$case;
-    $start += $offset;
-    my $stmt = substr($code, $start, $len);
-    die "Whit?"
-      unless my @match = $stmt =~ m{
-        \A
-        method ((?&PerlOWS))
-        ((?&PerlIdentifier)) ((?&PerlOWS))
-        (?: ((?&kw_balanced_parens)) ((?&PerlOWS)) )?+
-        ((?&PerlBlock)) ((?&PerlOWS))
-        $grammar
-      }x;
-    my ($ws0, $name, $ws1, $sig, $ws2, $block, $ws3) = @match;
-    my $sigcode = $sig ? " my $sig = \@_;" : '';
-    $block =~ s{^\{}{\{my \$self = shift;${sigcode}};
-    my $replace = "sub${ws0}${name}${ws1}${block}${ws3}";
-    substr($code, $start, $len) = $replace;
-    $offset += length($replace) - $len;
-  }
-  #warn "FINAL >>>\n$_<<<";
-  return $code;
+sub extend_grammar {
+  my ($self, $g) = @_;
+  $g->add_rule(MethodDeclaration => 
+    'method(?&PerlOWS)(?:(?&PerlIdentifier)(?&PerlOWS))?+'
+    .'(?:(?&PerlParenthesesList))?+'
+    .'(?&PerlOWS) (?&PerlBlock)'
+  );
+  $g->augment_rule(SubroutineDeclaration => '(?&PerlMethodDeclaration)');
+}
+
+sub transform_to_plain {
+  my ($self, $top) = @_;
+  $top->remove_use_statement('Method::Signatures::PP');
+  $top->remove_use_statement('Method::Signatures::Simple');
+  $top->each_match_within(MethodDeclaration => [
+      [ kw => 'method' ],
+      [ name => '(?&PerlOWS)(?:(?&PerlIdentifier)(?&PerlOWS))?+' ],
+      [ sig => '(?:(?&PerlParenthesesList))?+' ],
+      [ rest => '(?&PerlOWS) (?&PerlBlock)' ],
+    ] => sub {
+      my ($m) = @_;
+      my ($kw, $sig, $rest) = @{$m->submatches}{qw(kw sig rest)};
+      $kw->replace_text('sub');
+      my $sig_text = $sig->text;
+      my $front = 'my $self = shift; '
+                  .($sig_text ? "my ${sig_text} = \@_; ": '');
+      $rest->transform_text(sub { s/^(\s*)\{/${1}{ ${front}/ });
+      unless (($m->subtexts('name'))[0]) {
+        $rest->transform_text(sub { s/$/;/ });
+      }
+      $sig->replace_text('');
+  });
 }
 
 1;
